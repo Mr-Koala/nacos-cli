@@ -19,6 +19,20 @@ type Client struct {
 	Config *NacosConfig
 }
 
+// getAuthInfo 获取认证信息 比较operation和c.Config
+func (c *Client) getAuthInfo(operation *NacosOperation) (string, string) {
+	username := operation.Username
+	password := operation.Password
+	if username == "" {
+		username = c.Config.Username
+	}
+	if password == "" {
+		password = c.Config.Password
+	}
+
+	return username, password
+}
+
 // Get获取配置
 func (c *Client) Get(operation ConfigGetOperation) (*NacosConfigDetail, error) {
 
@@ -28,7 +42,14 @@ func (c *Client) Get(operation ConfigGetOperation) (*NacosConfigDetail, error) {
 		return nil, err
 	}
 
+	// 构建基础请求 URL
 	requestUrl := fmt.Sprintf(configUrl+"?show=all&dataId=%s&group=%s&tenant=%s", operation.DataId, operation.Group, operation.Namespace)
+
+	// 如果配置了用户名和密码，则添加到 URL 中
+	username, password := c.getAuthInfo(operation.NacosOperation)
+	if username!= "" && password!= "" {
+		requestUrl = fmt.Sprintf("%s&username=%s&password=%s", requestUrl, url.QueryEscape(username), url.QueryEscape(password))
+	}
 
 	resp, err := http.Get(requestUrl)
 
@@ -70,6 +91,12 @@ func (c *Client) AllConfig(operation ConfigGetOperation) ([]NacosPageItem, error
 
 	requestUrl := fmt.Sprintf(configUrl+"?dataId=&group=%s&tenant=%s&pageNo=1&pageSize=999&search=accurate", operation.Group, operation.Namespace)
 
+	// 如果配置了用户名和密码，则添加到 URL 中
+	username, password := c.getAuthInfo(operation.NacosOperation)
+	if username!= "" && password!= "" {
+		requestUrl = fmt.Sprintf("%s&username=%s&password=%s", requestUrl, url.QueryEscape(username), url.QueryEscape(password))
+	}
+
 	resp, err := http.Get(requestUrl)
 
 	if err != nil {
@@ -104,13 +131,22 @@ func (c *Client) Edit(operation ConfigEditOperation) error {
 		return err
 	}
 
-	resp, err := http.PostForm(configUrl, url.Values{
+	formValues := url.Values{
 		"dataId":  []string{operation.DataId},
 		"group":   []string{operation.Group},
 		"content": []string{operation.Content},
 		"tenant":  []string{operation.Namespace},
 		"type":    []string{operation.Type},
-	})
+	}
+
+	// 如果配置了用户名和密码，则添加到表单值中
+	username, password := c.getAuthInfo(operation.NacosOperation)
+	if username!= "" && password!= "" {
+		formValues.Add("username", username)
+		formValues.Add("password", password)
+	}
+
+	resp, err := http.PostForm(configUrl, formValues)
 
 	if err != nil {
 		return err
@@ -128,22 +164,25 @@ func getUrl(config *NacosConfig) (string, error) {
 }
 
 func NewDefaultClient() *Client {
+    addr := os.Getenv("NACOS_ADDR")
+    if addr == "" {
+        addr = "http://127.0.0.1:8848/nacos"
+    }
 
-	addr := os.Getenv("NACOS_ADDR")
-	apiVersion := os.Getenv("NACOS_API_VERSION")
+    apiVersion := os.Getenv("NACOS_API_VERSION")
+    if apiVersion == "" {
+        apiVersion = "v1"
+    }
 
-	if addr == "" {
-		addr = "http://127.0.0.1:8848/nacos"
-	}
+	defaultUsername := os.Getenv("NACOS_USER")
+    defaultPassword := os.Getenv("NACOS_PASSWD")
 
-	if apiVersion == "" {
-		apiVersion = "v1"
-	}
-
-	return &Client{
-		Config: &NacosConfig{
-			Addr:       addr,
-			ApiVersion: apiVersion,
-		},
-	}
+    return &Client{
+        Config: &NacosConfig{
+            Addr:       addr,
+            ApiVersion: apiVersion,
+            Username:   defaultUsername,
+            Password:   defaultPassword,
+        },
+    }
 }

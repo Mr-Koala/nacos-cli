@@ -24,6 +24,8 @@ var applyCmd = &cobra.Command{
 			NacosOperation: &nacos.NacosOperation{
 				Namespace: namespace,
 				Group:     group,
+				Username:  username,
+				Password:  password,
 			},
 			DataId: dataId,
 			File:   file,

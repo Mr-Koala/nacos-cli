@@ -32,6 +32,9 @@ var getConfig = &cobra.Command{
 			dataIds, err := nacosClient.AllConfig(nacos.ConfigGetOperation{
 				NacosOperation: &nacos.NacosOperation{
 					Namespace: namespace,
+					Group:     group,
+					Username:  username,
+					Password:  password,
 				},
 			})
 
@@ -53,6 +56,8 @@ var getConfig = &cobra.Command{
 			NacosOperation: &nacos.NacosOperation{
 				Namespace: namespace,
 				Group:     group,
+				Username:  username,
+				Password:  password,
 			},
 			DataId: dataId,
 		})
@@ -68,6 +73,9 @@ var getConfig = &cobra.Command{
 		dataIds, err := nacosClient.AllConfig(nacos.ConfigGetOperation{
 			NacosOperation: &nacos.NacosOperation{
 				Namespace: namespace,
+				Group:     group,
+				Username:  username,
+				Password:  password,
 			},
 		})
 		for _, dataId := range dataIds {
@@ -97,6 +105,8 @@ var editConfig = &cobra.Command{
 			NacosOperation: &nacos.NacosOperation{
 				Namespace: namespace,
 				Group:     group,
+				Username:  username,
+				Password:  password,
 			},
 			DataId: dataId,
 		})
@@ -139,6 +149,8 @@ var editConfig = &cobra.Command{
 			NacosOperation: &nacos.NacosOperation{
 				Namespace: namespace,
 				Group:     group,
+				Username:  username,
+				Password:  password,
 			},
 			DataId:  dataId,
 			Content: string(edited),
@@ -168,6 +180,8 @@ var deleteConfig = &cobra.Command{
 			NacosOperation: &nacos.NacosOperation{
 				Namespace: namespace,
 				Group:     group,
+				Username:  username,
+				Password:  password,
 			},
 			DataId: args[0],
 		})

@@ -10,6 +10,8 @@ type NacosConfig struct {
 type NacosOperation struct {
 	Namespace string // 命名空间
 	Group     string // 组
+	Username  string // 用户名
+	Password  string // 密码
 }
 
 // ConfigEditOperation 配置更新操作

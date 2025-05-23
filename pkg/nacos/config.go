@@ -63,11 +63,21 @@ func (c *Client) DeleteConfig(operation ConfigDeleteOperation) error {
 	}
 
 	// 请求参数
-	req.URL.RawQuery = url.Values{
+	params := url.Values{
 		"dataId": []string{operation.DataId},
 		"group":  []string{operation.Group},
 		"tenant": []string{operation.Namespace},
-	}.Encode()
+	}
+
+	// 添加认证参数
+	username, password := c.getAuthInfo(operation.NacosOperation)
+	if username!= "" && password!= "" {
+		params.Add("username", username)
+		params.Add("password", password)
+	}
+
+	// 设置请求参数
+	req.URL.RawQuery = params.Encode()
 
 	resp, err := http.DefaultClient.Do(req)
 
