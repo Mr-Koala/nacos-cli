@@ -44,13 +44,19 @@ jobs:
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/nacos-cli_linux_arm64
           # Windows AMD64
           CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/nacos-cli_windows_amd64.exe
+          # macOS AMD64
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o dist/nacos-cli_darwin_amd64
+          # macOS ARM64
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o dist/nacos-cli_darwin_arm64
 
       - name: Package binaries
         run: |
           cd dist
-          chmod +x nacos-cli_linux_*
+          chmod +x nacos-cli_linux_* nacos-cli_darwin_*
           tar -czf nacos-cli_${VERSION}_linux_amd64.tar.gz nacos-cli_linux_amd64
           tar -czf nacos-cli_${VERSION}_linux_arm64.tar.gz nacos-cli_linux_arm64
+          tar -czf nacos-cli_${VERSION}_darwin_amd64.tar.gz nacos-cli_darwin_amd64
+          tar -czf nacos-cli_${VERSION}_darwin_arm64.tar.gz nacos-cli_darwin_arm64
           zip nacos-cli_${VERSION}_windows_amd64.zip nacos-cli_windows_amd64.exe
 
       - name: Create Release
@@ -60,6 +66,8 @@ jobs:
           files: |
             dist/nacos-cli_${{ env.VERSION }}_linux_amd64.tar.gz
             dist/nacos-cli_${{ env.VERSION }}_linux_arm64.tar.gz
+            dist/nacos-cli_${{ env.VERSION }}_darwin_amd64.tar.gz
+            dist/nacos-cli_${{ env.VERSION }}_darwin_arm64.tar.gz
             dist/nacos-cli_${{ env.VERSION }}_windows_amd64.zip
           draft: false
           prerelease: false
