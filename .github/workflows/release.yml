@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Create release directory
+        run: mkdir -p dist
+
+      - name: Build for multiple platforms
+        run: |
+          # Linux AMD64
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/nacos-cli_linux_amd64
+          # Linux ARM64
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o dist/nacos-cli_linux_arm64
+          # Windows AMD64
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/nacos-cli_windows_amd64.exe
+
+      - name: Package binaries
+        run: |
+          cd dist
+          chmod +x nacos-cli_linux_*
+          tar -czf nacos-cli_${GITHUB_REF_NAME}_linux_amd64.tar.gz nacos-cli_linux_amd64
+          tar -czf nacos-cli_${GITHUB_REF_NAME}_linux_arm64.tar.gz nacos-cli_linux_arm64
+          zip nacos-cli_${GITHUB_REF_NAME}_windows_amd64.zip nacos-cli_windows_amd64.exe
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/nacos-cli_${{ github.ref_name }}_linux_amd64.tar.gz
+            dist/nacos-cli_${{ github.ref_name }}_linux_arm64.tar.gz
+            dist/nacos-cli_${{ github.ref_name }}_windows_amd64.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
