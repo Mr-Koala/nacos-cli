@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的标签版本（例如：v1.2.0）'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -13,6 +19,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Set release version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          fi
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -35,17 +49,18 @@ jobs:
         run: |
           cd dist
           chmod +x nacos-cli_linux_*
-          tar -czf nacos-cli_${GITHUB_REF_NAME}_linux_amd64.tar.gz nacos-cli_linux_amd64
-          tar -czf nacos-cli_${GITHUB_REF_NAME}_linux_arm64.tar.gz nacos-cli_linux_arm64
-          zip nacos-cli_${GITHUB_REF_NAME}_windows_amd64.zip nacos-cli_windows_amd64.exe
+          tar -czf nacos-cli_${VERSION}_linux_amd64.tar.gz nacos-cli_linux_amd64
+          tar -czf nacos-cli_${VERSION}_linux_arm64.tar.gz nacos-cli_linux_arm64
+          zip nacos-cli_${VERSION}_windows_amd64.zip nacos-cli_windows_amd64.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.VERSION }}
           files: |
-            dist/nacos-cli_${{ github.ref_name }}_linux_amd64.tar.gz
-            dist/nacos-cli_${{ github.ref_name }}_linux_arm64.tar.gz
-            dist/nacos-cli_${{ github.ref_name }}_windows_amd64.zip
+            dist/nacos-cli_${{ env.VERSION }}_linux_amd64.tar.gz
+            dist/nacos-cli_${{ env.VERSION }}_linux_arm64.tar.gz
+            dist/nacos-cli_${{ env.VERSION }}_windows_amd64.zip
           draft: false
           prerelease: false
           generate_release_notes: true
